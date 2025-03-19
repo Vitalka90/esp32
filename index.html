@@ -32,18 +32,18 @@
     <p id="status"></p>
     <script>
         let port;
-        const GITHUB_REPO_URL = "https://vitalka90.github.io/esp32/";
+        const GITHUB_FIRMWARE_URL = "https://github.com/Vitalka90/esp32/raw/refs/heads/main/tasmota32c3_ottelo.bin";
 
         async function fetchImages() {
             try {
-                const files = ["tasmota32c3_ottelo.bin"];
+                const files = [{ name: "tasmota32c3_ottelo.bin", url: GITHUB_FIRMWARE_URL }];
                 
                 const select = document.getElementById('firmware-select');
                 select.innerHTML = '';
                 files.forEach(file => {
                     const option = document.createElement('option');
-                    option.value = GITHUB_REPO_URL + file;
-                    option.textContent = file;
+                    option.value = file.url;
+                    option.textContent = file.name;
                     select.appendChild(option);
                 });
             } catch (error) {
