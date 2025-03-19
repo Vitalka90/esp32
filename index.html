@@ -32,18 +32,17 @@
     <p id="status"></p>
     <script>
         let port;
+        const GITHUB_REPO_URL = "https://vitalka90.github.io/esp32/";
 
         async function fetchImages() {
             try {
-                const response = await fetch('files.json');
-                const data = await response.json();
-                const files = data.files;
+                const files = ["tasmota32c3_ottelo.bin"];
                 
                 const select = document.getElementById('firmware-select');
                 select.innerHTML = '';
                 files.forEach(file => {
                     const option = document.createElement('option');
-                    option.value = file;
+                    option.value = GITHUB_REPO_URL + file;
                     option.textContent = file;
                     select.appendChild(option);
                 });
