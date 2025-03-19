@@ -36,16 +36,12 @@
 
         async function fetchImages() {
             try {
-                const files = [{ name: "tasmota32c3_ottelo.bin", url: GITHUB_FIRMWARE_URL }];
-                
                 const select = document.getElementById('firmware-select');
                 select.innerHTML = '';
-                files.forEach(file => {
-                    const option = document.createElement('option');
-                    option.value = file.url;
-                    option.textContent = file.name;
-                    select.appendChild(option);
-                });
+                const option = document.createElement('option');
+                option.value = GITHUB_FIRMWARE_URL;
+                option.textContent = "tasmota32c3_ottelo.bin";
+                select.appendChild(option);
             } catch (error) {
                 console.error('Fehler beim Laden der Firmware-Dateien:', error);
             }
@@ -73,7 +69,37 @@
             }
         }
 
+        async function flashESP32() {
+            if (!port) {
+                alert("Bitte zuerst den ESP32 verbinden!");
+                return;
+            }
+            const firmwareUrl = document.getElementById('firmware-select').value;
+            if (!firmwareUrl) {
+                alert("Bitte eine Firmware auswählen!");
+                return;
+            }
+            document.getElementById('status').textContent = "Firmware wird heruntergeladen...";
+            
+            try {
+                const response = await fetch(firmwareUrl);
+                const firmwareData = await response.arrayBuffer();
+                const writer = port.writable.getWriter();
+                const chunkSize = 1024;
+                for (let i = 0; i < firmwareData.byteLength; i += chunkSize) {
+                    const chunk = new Uint8Array(firmwareData.slice(i, i + chunkSize));
+                    await writer.write(chunk);
+                }
+                writer.releaseLock();
+                document.getElementById('status').textContent = "Flashen abgeschlossen!";
+            } catch (error) {
+                console.error('Fehler beim Flashen:', error);
+                document.getElementById('status').textContent = "Flashen fehlgeschlagen.";
+            }
+        }
+
         document.getElementById('connect-button').addEventListener('click', connectESP32);
+        document.getElementById('flash-button').addEventListener('click', flashESP32);
         document.addEventListener('DOMContentLoaded', fetchImages);
     </script>
 </body>
