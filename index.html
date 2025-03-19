@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 Flasher</title>
+    <script src="https://unpkg.com/esptool-js@latest/dist/browser.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         #firmware-select, #port-select {
@@ -31,7 +32,7 @@
     <button id="flash-button">Flashen</button>
     <p id="status"></p>
     <script>
-        let port;
+        let esptool;
         const GITHUB_FIRMWARE_URL = "https://github.com/Vitalka90/esp32/raw/refs/heads/main/tasmota32c3_ottelo.bin";
 
         async function fetchImages() {
@@ -53,16 +54,9 @@
                     alert("Web Serial API wird nicht unterstützt. Bitte nutze Chrome oder Edge.");
                     return;
                 }
-                port = await navigator.serial.requestPort();
-                await port.open({ baudRate: 115200 });
+                esptool = new ESPLoader(115200, "esp32");
+                await esptool.connect();
                 document.getElementById('status').textContent = "ESP32 verbunden.";
-                
-                const select = document.getElementById('port-select');
-                select.innerHTML = '';
-                const option = document.createElement('option');
-                option.value = "selected";
-                option.textContent = "Verbundenes Gerät";
-                select.appendChild(option);
             } catch (error) {
                 console.error('Fehler beim Verbinden:', error);
                 document.getElementById('status').textContent = "Verbindung fehlgeschlagen.";
@@ -70,7 +64,7 @@
         }
 
         async function flashESP32() {
-            if (!port) {
+            if (!esptool) {
                 alert("Bitte zuerst den ESP32 verbinden!");
                 return;
             }
@@ -83,14 +77,9 @@
             
             try {
                 const response = await fetch(firmwareUrl);
-                const firmwareData = await response.arrayBuffer();
-                const writer = port.writable.getWriter();
-                const chunkSize = 1024;
-                for (let i = 0; i < firmwareData.byteLength; i += chunkSize) {
-                    const chunk = new Uint8Array(firmwareData.slice(i, i + chunkSize));
-                    await writer.write(chunk);
-                }
-                writer.releaseLock();
+                const firmwareData = new Uint8Array(await response.arrayBuffer());
+                document.getElementById('status').textContent = "Flashen läuft...";
+                await esptool.flash([{data: firmwareData, address: 0x1000}]);
                 document.getElementById('status').textContent = "Flashen abgeschlossen!";
             } catch (error) {
                 console.error('Fehler beim Flashen:', error);
