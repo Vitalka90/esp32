@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Flasher</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #firmware-select, #port-select {
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #flash-button, #connect-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>ESP32 Flasher</h1>
+    <button id="connect-button">ESP32 verbinden</button>
+    <br>
+    <label for="port-select">Seriellen Port auswählen:</label>
+    <select id="port-select"></select>
+    <br>
+    <label for="firmware-select">Firmware auswählen:</label>
+    <select id="firmware-select"></select>
+    <button id="flash-button">Flashen</button>
+    <p id="status"></p>
+    <script>
+        let port;
+
+        async function fetchImages() {
+            try {
+                const response = await fetch('files.json');
+                const data = await response.json();
+                const files = data.files;
+                
+                const select = document.getElementById('firmware-select');
+                select.innerHTML = '';
+                files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file;
+                    option.textContent = file;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Fehler beim Laden der Firmware-Dateien:', error);
+            }
+        }
+
+        async function connectESP32() {
+            try {
+                if (!navigator.serial) {
+                    alert("Web Serial API wird nicht unterstützt. Bitte nutze Chrome oder Edge.");
+                    return;
+                }
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                document.getElementById('status').textContent = "ESP32 verbunden.";
+                
+                const select = document.getElementById('port-select');
+                select.innerHTML = '';
+                const option = document.createElement('option');
+                option.value = "selected";
+                option.textContent = "Verbundenes Gerät";
+                select.appendChild(option);
+            } catch (error) {
+                console.error('Fehler beim Verbinden:', error);
+                document.getElementById('status').textContent = "Verbindung fehlgeschlagen.";
+            }
+        }
+
+        document.getElementById('connect-button').addEventListener('click', connectESP32);
+        document.addEventListener('DOMContentLoaded', fetchImages);
+    </script>
+</body>
+</html>
